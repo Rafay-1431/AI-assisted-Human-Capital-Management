@@ -3,3 +3,48 @@
 body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* ── Shimmer skeleton (used by loading.jsx files) ────────────────────────── */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background-color: rgb(226 232 240 / 0.7); /* slate-200 */
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.6s infinite;
+}
+
+/* ── Page transition ─────────────────────────────────────────────────────── */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.page-enter {
+  animation: pageEnter 0.25s ease-out both;
+}
+
+/* ── Print (ID badge page) ───────────────────────────────────────────────── */
+@media print {
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+}

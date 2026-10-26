@@ -141,6 +141,14 @@ export default async function DashboardPage() {
         </div>
 
         <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200">
+          <p className="mb-3 font-semibold text-gray-900">My ID badge</p>
+          <p className="text-sm text-gray-500">
+            Present your digital badge at the entrance — HR scans the QR and the server marks you present.
+          </p>
+          <Link href="/attendance/badge" className="mt-3 inline-block text-xs font-semibold text-teal-700 underline">Open my badge</Link>
+        </div>
+
+        <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200">
           <p className="mb-3 font-semibold text-gray-900">Ask my assistant</p>
           <p className="text-sm text-gray-500">
             Open the AI Assistant (top-right) and ask things like “how many hours did I work this week?” or “what is the late rule?” — it answers

@@ -1,5 +1,6 @@
 import { requireStaff } from '@/services/guard';
-import { PageHeader, EmptyState, TableWrap, Th, Td, StatusBadge, Badge } from '@/components/ui/primitives';
+import { PageHeader, EmptyState, TableWrap, Th, Td, StatusBadge, Badge, btn } from '@/components/ui/primitives';
+import ScanBadgeButton from '@/components/attendance/qr-scanner';
 
 /** Daily attendance board (checklist 10) — staff only, filtered server-side. */
 export default async function AttendanceBoardPage({ searchParams }) {
@@ -27,7 +28,9 @@ export default async function AttendanceBoardPage({ searchParams }) {
 
   return (
     <div>
-      <PageHeader title="Daily attendance board" subtitle="Everyone who checked in / out on the selected day." />
+      <PageHeader title="Daily attendance board" subtitle="Everyone who checked in / out on the selected day.">
+        <ScanBadgeButton defaultMode="in" className={btn.ghost} />
+      </PageHeader>
 
       <div className="mb-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200">
         <form method="GET" className="flex flex-wrap items-end gap-3">

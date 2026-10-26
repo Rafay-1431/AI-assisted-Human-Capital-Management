@@ -18,6 +18,10 @@ export default function StoreProvider({ children }) {
   const storeRef = useRef(null);
   if (!storeRef.current) {
     storeRef.current = makeStore();
+    // Dev debugging handle (never ships to production builds).
+    if (process.env.NODE_ENV !== 'production') {
+      if (typeof window !== 'undefined') window.__hcmStore = storeRef.current;
+    }
   }
   return <Provider store={storeRef.current}>{children}</Provider>;
 }

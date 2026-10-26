@@ -19,11 +19,13 @@
     "@reduxjs/toolkit": "^2.13.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
+    "html5-qrcode": "^2.3.8",
     "next": "^16.4.3",
     "openai": "^7.43.0",
     "pdf-lib": "^1.17.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-qr-code": "^2.2.0",
     "react-redux": "^9.3.0",
     "recharts": "^3.10.1",
     "server-only": "^0.0.1"

@@ -35,6 +35,7 @@ export default async function MyAttendancePage() {
 
       <div className="flex flex-wrap gap-2 text-sm">
         <Badge tone="teal">Last 30 records · {Number(hours.toFixed(1))} h tracked</Badge>
+        <Link href="/attendance/badge" className="text-xs font-semibold text-teal-700 underline">View my ID badge</Link>
       </div>
 
       {records?.length ? (

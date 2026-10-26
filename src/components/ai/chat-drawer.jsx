@@ -5,10 +5,10 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setChatPanelOpen } from '@/store/slices/uiSlice';
 
 /**
- * AI chat panel (M8, checklist 19): a right-side drawer available to every
- * role. Messages live client-side; the server route enforces role-scoped
- * tools, rate limits, the 15 s timeout and ai_logs. Answers carry an
- * 'AI-generated' label; degraded replies show the friendly fallback.
+ * Floating AI Assistant widget (M8, checklist 19): a bottom-right avatar with
+ * a one-time greeting bubble that toggles a compact chat card. Messages live
+ * client-side; the server route enforces role-scoped tools, rate limits, the
+ * 15 s timeout and ai_logs. Answers carry an 'AI-generated' label.
  */
 
 const SUGGESTIONS = {
@@ -17,13 +17,25 @@ const SUGGESTIONS = {
   employee: ['How many hours did I work this week?', 'What is my attendance summary?', 'What is the office timing and grace period?'],
 };
 
-export default function ChatDrawer({ role = 'employee' }) {
+export default function ChatDrawer({ role = 'employee', userName = '' }) {
   const dispatch = useAppDispatch();
   const open = useAppSelector((s) => s.ui.chatPanelOpen);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [pending, setPending] = useState(false);
+  const [greetingVisible, setGreetingVisible] = useState(false);
   const scrollRef = useRef(null);
+
+  // One-time greeting bubble, auto-dismissed; never shown again after opening.
+  useEffect(() => {
+    const show = setTimeout(() => setGreetingVisible(true), 1500);
+    const hide = setTimeout(() => setGreetingVisible(false), 14000);
+    return () => { clearTimeout(show); clearTimeout(hide); };
+  }, []);
+
+  useEffect(() => {
+    if (open) setGreetingVisible(false);
+  }, [open]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -54,27 +66,29 @@ export default function ChatDrawer({ role = 'employee' }) {
     setPending(false);
   }
 
+  const firstName = userName ? userName.split(' ')[0] : '';
+
   return (
     <>
-      <button
-        onClick={() => dispatch(setChatPanelOpen(!open))}
-        className="rounded-lg bg-teal-50 px-3 py-1.5 text-sm font-semibold text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100"
-      >
-        ✦ AI Assistant
-      </button>
-
+      {/* Compact floating chat card — anchored above the avatar */}
       {open ? (
-        <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-gray-200 bg-white shadow-2xl">
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+        <div className="page-enter fixed bottom-24 right-6 z-40 flex h-[28rem] max-h-[75vh] w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl sm:w-96">
+          <div className="flex items-center justify-between bg-gradient-to-br from-teal-600 to-teal-700 px-4 py-3 text-white">
             <div>
-              <p className="font-semibold text-gray-900">HCM Lite Assistant</p>
-              <p className="text-xs text-gray-400">Answers from real data · role-scoped · AI-generated</p>
+              <p className="font-semibold">HCM Lite Assistant</p>
+              <p className="text-xs text-teal-100">Real data · role-scoped · AI-generated</p>
             </div>
             <div className="flex items-center gap-2">
               {messages.length > 0 ? (
-                <button className="text-xs text-gray-400 hover:text-gray-600" onClick={() => setMessages([])}>Clear</button>
+                <button className="text-xs text-teal-100 hover:text-white" onClick={() => setMessages([])}>Clear</button>
               ) : null}
-              <button className="text-gray-400 hover:text-gray-600" onClick={() => dispatch(setChatPanelOpen(false))} aria-label="Close">✕</button>
+              <button
+                className="flex h-8 w-8 items-center justify-center rounded-full text-teal-100 hover:bg-white/10"
+                onClick={() => dispatch(setChatPanelOpen(false))}
+                aria-label="Close chat"
+              >
+                ✕
+              </button>
             </div>
           </div>
 
@@ -82,7 +96,7 @@ export default function ChatDrawer({ role = 'employee' }) {
             {messages.length === 0 ? (
               <div className="space-y-3">
                 <p className="text-sm text-gray-500">
-                  Ask about attendance, payroll or company policy. I only see what your role allows — and I never touch data.
+                  Hi{firstName ? ` ${firstName}` : ''}! Ask about attendance, payroll or policy — I only see what your role allows, and I never change data.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {(SUGGESTIONS[role] ?? SUGGESTIONS.employee).map((s) => (
@@ -117,7 +131,11 @@ export default function ChatDrawer({ role = 'employee' }) {
 
             {pending ? (
               <div className="flex justify-start">
-                <div className="rounded-2xl bg-gray-100 px-3 py-2 text-sm text-gray-400">Thinking…</div>
+                <div className="flex items-center gap-1.5 rounded-2xl bg-gray-100 px-3 py-2.5">
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:0ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:150ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:300ms]" />
+                </div>
               </div>
             ) : null}
           </div>
@@ -146,6 +164,29 @@ export default function ChatDrawer({ role = 'employee' }) {
           </form>
         </div>
       ) : null}
+
+      {/* Greeting bubble */}
+      {greetingVisible && !open ? (
+        <div className="page-enter fixed bottom-24 right-6 z-30 max-w-60 rounded-2xl rounded-br-md bg-white p-3 pr-5 text-xs leading-relaxed text-gray-600 shadow-xl ring-1 ring-gray-200">
+          Hi{firstName ? `, ${firstName}` : ''}! 👋 I'm your HR assistant — ask me about attendance, payroll or company policy.
+          <button
+            onClick={() => setGreetingVisible(false)}
+            aria-label="Dismiss greeting"
+            className="absolute right-1.5 top-1.5 text-gray-300 hover:text-gray-500"
+          >
+            ✕
+          </button>
+        </div>
+      ) : null}
+
+      {/* Floating avatar button */}
+      <button
+        onClick={() => dispatch(setChatPanelOpen(!open))}
+        aria-label={open ? 'Close AI assistant' : 'Open AI assistant'}
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-teal-700 text-2xl text-white shadow-lg shadow-teal-600/40 ring-4 ring-white transition-transform hover:scale-105 active:scale-95"
+      >
+        {open ? '✕' : '✦'}
+      </button>
     </>
   );
 }

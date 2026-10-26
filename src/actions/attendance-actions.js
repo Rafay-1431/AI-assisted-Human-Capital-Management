@@ -8,11 +8,13 @@
  */
 
 import { revalidatePath } from 'next/cache';
-import { assertEmployee, assertStaff, withAction } from '@/services/guard';
+import { assertUser, assertEmployee, assertStaff, withAction } from '@/services/guard';
 
 const RPC_ERROR_COPY = {
   CM401: 'Your account is inactive.',
   CM402: 'No employee profile is linked to your account.',
+  CM403: 'You can only scan your own badge.',
+  CM404: 'Badge not recognized — check the code and try again.',
   CM409: 'You have already checked in today.',
   CM410: 'No open check-in found for today.',
   CM422: 'Face check failed — exactly one face must be visible in frame.',
@@ -124,8 +126,7 @@ export async function submitCorrectionAction({ workDate, checkIn, checkOut, reas
 }
 
 /** HR/Admin approve or reject (rules + notifications inside review_correction). */
-export async function reviewCorrectionAction({ correctionId, approve, comment }) {
-  return withAction(async () => {
+export async function reviewCorrectionAction({ correctionId, approve, comment }) {  return withAction(async () => {
     const session = await assertStaff();
 
     const { data, error } = await session.supabase.rpc('review_correction', {
@@ -170,5 +171,47 @@ export async function getAttendanceBoardAction(filters = {}) {
         : true,
     );
     return { rows };
+  });
+}
+
+/* ── Badge QR attendance (M4 extension) ────────────────────────────────────
+ * The badge RPC enforces RBAC server-side: staff may scan any badge,
+ * employees only their own. The caller never picks WHO — only the badge does.
+ */
+
+async function badgeResult(session, mode, employeeCode) {
+  const rpcName = mode === 'out' ? 'badge_check_out' : 'badge_check_in';
+  const { data, error } = await session.supabase.rpc(rpcName, {
+    p_employee_code: String(employeeCode ?? '').trim(),
+  });
+  if (error) throw Object.assign(new Error(error.message), { code: error.code ?? 'RPC_FAILED' });
+
+  // Resolve the employee for the success toast (RLS scopes the read).
+  const { data: emp } = await session.supabase
+    .from('v_employee_directory')
+    .select('full_name, employee_code')
+    .eq('employee_code', String(employeeCode ?? '').trim())
+    .maybeSingle();
+
+  return {
+    attendance: data,
+    employeeName: emp?.full_name ?? employeeCode,
+    employeeCode: emp?.employee_code ?? employeeCode,
+  };
+}
+
+/**
+ * @param {{ employeeCode: string, mode?: 'in'|'out' }} payload
+ * @returns {{ ok, attendance, employeeName, employeeCode }} — serializable
+ * for the scanner's toast (times as ISO strings).
+ */
+export async function badgeScanAction({ employeeCode, mode = 'in' }) {
+  return withAction(async () => {
+    const session = await (mode === 'out' ? assertStaff() : assertUser());
+    const result = await badgeResult(session, mode, employeeCode);
+    revalidatePath('/attendance/my');
+    revalidatePath('/attendance/board');
+    revalidatePath('/attendance');
+    return result;
   });
 }

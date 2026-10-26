@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/services/guard';
 import { PageHeader, Card, StatusBadge, TableWrap, Th, Td, Badge, btn } from '@/components/ui/primitives';
+import IdBadge from '@/components/employees/id-badge';
 
 /**
  * Employee 360 (checklist 07): personal + job + compensation + attendance +
@@ -51,6 +52,28 @@ export default async function Employee360Page({ params }) {
       >
         <StatusBadge value={employee.employment_status} />
       </PageHeader>
+
+      {/* Digital ID badge — QR encodes the employee code for entrance scanners */}
+      <Card className="no-print">
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-around">
+          <IdBadge
+            compact
+            employeeCode={employee.employee_code}
+            fullName={employee.user?.full_name ?? ''}
+            designation={employee.designation?.title}
+            department={employee.department?.name}
+          />
+          <div className="max-w-56 space-y-2 text-center sm:text-left">
+            <p className="font-semibold text-gray-900">Digital ID badge</p>
+            <p className="text-sm text-gray-500">
+              HR can scan this QR at the entrance to mark attendance — the server stamps the time and applies the rules.
+            </p>
+            {profile.role === 'employee' ? (
+              <Link href="/attendance/badge" className={btn.ghost + ' inline-block'}>Open print view</Link>
+            ) : null}
+          </div>
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
